@@ -3,6 +3,7 @@ using API.Enums;
 using API.Validators;
 using static API.Validators.PopsicleInventoryValidator;
 using static API.Common.CommonMethods;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace API.Sql
 {
@@ -94,7 +95,7 @@ namespace API.Sql
             if (!IsValidPopsicleInventoryRequest(flavor, plu, out string _))
                 return null;
 
-            if (!IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, quantity, out string _))
+            if (!IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, quantity, out string _, enabled))
                 return null;
 
             if (!IsValidAuthor(author))
@@ -122,6 +123,18 @@ namespace API.Sql
 
             return originalPopsicle;
 
+        }
+
+        public static List<PopsicleInventoryDto> RetrieveAnyPopsicleInventories(string? flavor, string? plu, bool? enabled = true)
+        {
+            if (!IsValidSearchRequest(flavor, plu, out string _))
+                return new List<PopsicleInventoryDto>();
+
+            return PopsicleInventories.Where(p =>
+                (IsEmptyString(flavor) || GetPopsicleFlavorFromString(flavor).Equals(p.PopsicleFlavor))
+                && (IsEmptyString(plu) || p.Plu.Equals(plu))
+                && (enabled is null || p.Enabled == enabled)
+            ).ToList();
         }
 
     }

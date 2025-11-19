@@ -3,6 +3,7 @@ using API.Enums;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using static API.Common.CommonMethods;
+using static API.Validators.PopsicleInventoryValidator;
 
 namespace API.Validators
 {
@@ -160,7 +161,7 @@ namespace API.Validators
             return popsicleFlavor;
         }        
 
-        public static bool IsValidPopsicleInventoryUpdateRequest(string? flavor, string? plu, string? newFlavor, string? newPlu, uint? quantity, out string errorMessage)
+        public static bool IsValidPopsicleInventoryUpdateRequest(string? flavor, string? plu, string? newFlavor, string? newPlu, uint? quantity, out string errorMessage, bool? enabled = null)
         {
             errorMessage = "";
 
@@ -173,7 +174,7 @@ namespace API.Validators
                 return false;
             }
 
-            if (quantity is not uint && !IsValidPopsicleInventoryRequest(newFlavor, newPlu, out string innerErrorMessage))
+            if (enabled is not bool && quantity is not uint && !IsValidPopsicleInventoryRequest(newFlavor, newPlu, out string innerErrorMessage))
             {
                 if (quantity is not uint)
                     errorMessage += innerErrorMessage + string.Format(ErrorMessages[ErrorDescription.Invalid_Quantity], quantity is null ? "None;" : quantity);
@@ -206,6 +207,24 @@ namespace API.Validators
                 errorMessage = string.Format(ErrorMessages[ErrorDescription.Avoiding_Duplicate_Entry], newFlavor, newPlu);
                 return false;
             }
+
+            return true;
+        }
+
+        public static bool IsValidSearchRequest(string? flavor, string? plu, out string errorMessage)
+        {
+            errorMessage = "";
+
+            if (IsEmptyString(flavor) && IsEmptyString(plu))
+                return true;
+
+            if(!IsValidFlavor(flavor) && !IsEmptyString(flavor))
+                errorMessage += string.Format(ErrorMessages[ErrorDescription.Invalid_Flavor], flavor ?? "None;");
+            if(!IsValidPlu(plu) && !IsEmptyString(plu))
+                errorMessage += string.Format(ErrorMessages[ErrorDescription.Invalid_Plu], plu ?? "None;");
+
+            if (errorMessage.Length > 0)
+                return false;
 
             return true;
         }

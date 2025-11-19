@@ -203,5 +203,47 @@ namespace ApiUnitTests
             uint? q = (uint?)quantity;
             Assert.False(PopsicleInventoryValidator.IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, q, out string _), "Valid Request");
         }
+
+        [Theory]
+        [InlineData("orange", "", "orange", "", 1, "aurora")]
+        [InlineData("", "123456", "orange", "", 1, "aurora")]
+        [InlineData("orange", "", "", "123456", null, "aurora")]
+        [InlineData("", "123456", "", "123456", 1, "aurora")]
+        public void Test_UpdatePopsicleInventory_True(string? flavor, string? plu, string? newFlavor, string? newPlu, int? quantity, string author)
+        {
+            uint? q = (uint?)quantity;
+            Assert.True(API.Sql.CommonMethods.UpdatePopsicleInventory(flavor, plu, newFlavor, newPlu, q, author) is PopsicleInventoryDto, "Invalid Request");
+        }
+
+        [Theory]
+        [InlineData("", "", "", "", null, "aurora")]
+        [InlineData("orange", "123457", "", "", null, "aurora")]
+        [InlineData("", "123457", "", "", null, "aurora")]
+        [InlineData("orange", "", "", "", null, "aurora")]
+        [InlineData("orange", "", "raspberry", "", null, "aurora")]
+        [InlineData("orange", "", "", "123457", null, "aurora")]
+        [InlineData("orange", "", "", "123457", null, "")]
+        public void Test_UpdatePopsicleInventory_False(string? flavor, string? plu, string? newFlavor, string? newPlu, int? quantity, string? author)
+        {
+            uint? q = (uint?)quantity;
+            Assert.True(API.Sql.CommonMethods.UpdatePopsicleInventory(flavor, plu, newFlavor, newPlu, q, author) is null, "Valid Request");
+        }
+
+        [Theory]
+        [InlineData("orange", "")]
+        [InlineData("", "123456")]
+        [InlineData("", "", true)]
+        public void Test_SearchPopsicleInventory_True(string? flavor, string? plu, bool? enabled = true)
+        {
+            Assert.True(API.Sql.CommonMethods.RetrieveAnyPopsicleInventories(flavor, plu, enabled).Any(), "Invalid Request");
+        }
+
+        [Theory]
+        [InlineData("", "", false)]
+        [InlineData("apple", "123123")]
+        public void Test_SearchPopsicleInventory_False(string? flavor, string? plu, bool? enabled = true)
+        {
+            Assert.False(API.Sql.CommonMethods.RetrieveAnyPopsicleInventories(flavor, plu, enabled).Any(), "Valid Request");
+        }
     }
 }

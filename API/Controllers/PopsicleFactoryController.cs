@@ -20,14 +20,6 @@ public class PopsicleFactoryController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet(Name = "GetAllPopsicleInventory")]
-    public IActionResult GetAllPopsicleInventory()
-    {        
-        var popsicleInventories = Sql.CommonMethods.RetrieveAllPopsicleInventories();
-        
-        return Ok(popsicleInventories.Select(pi => new PopsicleInventory(pi)).ToList());
-    }
-
     [HttpGet(Name = "GetPopsicleInventory")]
     public IActionResult GetPopsicleInventory(string? flavor, string? plu, bool? enabled = true)
     {
@@ -69,14 +61,14 @@ public class PopsicleFactoryController : ControllerBase
     }
 
     [HttpPut(Name = "ReplacePopsicleInventory")]
-    public IActionResult ReplacePopsicleInventory(string flavor, string plu, string? newFlavor, string? newPlu, uint? quantity, string author, bool? enabled = null)
+    public IActionResult ReplacePopsicleInventory(string? flavor, string? plu, string? newFlavor, string? newPlu, uint? quantity, string author, bool? enabled = null)
     {
         string resultMessage;
 
         if (!IsValidPopsicleInventoryRequest(flavor, plu, out resultMessage))
             return BadRequest("Target Popsicle Invalid - " + resultMessage);
 
-        if (!IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, quantity, out resultMessage))
+        if (!IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, quantity, out resultMessage, enabled))
             return BadRequest("Update Values Invalid - " + resultMessage);
 
         if (!IsValidAuthor(author))
@@ -90,5 +82,28 @@ public class PopsicleFactoryController : ControllerBase
             return Problem(ErrorMessages[ErrorDescription.Contact_Support]);
 
         return Ok(new PopsicleInventory(popsicleInventory));
+    }
+
+    [HttpPut(Name = "UpdatePopsicleInventory")]
+    public IActionResult UpdatePopsicleInventory(string? flavor, string? plu, string? newFlavor, string? newPlu, uint? quantity, string author, bool? enabled = null)
+    {
+        return ReplacePopsicleInventory(flavor, plu, newFlavor, newPlu, quantity, author, enabled);
+    }
+
+    [HttpPut(Name = "RemovePopsicleInventory")]
+    public IActionResult RemovePopsicleInventory(string? flavor, string? plu, string author)
+    {
+        return ReplacePopsicleInventory(flavor, plu, null, null, null, author, false);
+    }
+
+    [HttpPut(Name = "SearchPopsicleInventory")]
+    public IActionResult SearchPopsicleInventory(string? flavor, string? plu, bool? enabled = true)
+    {
+        if (!IsValidSearchRequest(flavor, plu, out string errorMessage))
+            return BadRequest(errorMessage);
+
+        return Ok(Sql.CommonMethods.RetrieveAnyPopsicleInventories(flavor, plu, enabled)
+            .Select(p => new PopsicleInventory(p))
+            .ToList());
     }
 }
