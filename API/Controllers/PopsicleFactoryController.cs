@@ -1,6 +1,6 @@
 using API.Enums;
 using API.Validators;
-using API.ViewModel;
+using API.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using static API.Validators.PopsicleInventoryValidator;
 

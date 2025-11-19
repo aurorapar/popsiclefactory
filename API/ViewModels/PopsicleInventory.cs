@@ -1,7 +1,7 @@
 ﻿using API.Dtos;
 using API.Enums;
 
-namespace API.ViewModel
+namespace API.ViewModels
 {
     public class PopsicleInventory
     {

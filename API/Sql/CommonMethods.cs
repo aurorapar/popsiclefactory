@@ -1,7 +1,6 @@
 ﻿using API.Dtos;
 using API.Enums;
 using API.Validators;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace API.Sql
 {
@@ -20,6 +19,11 @@ namespace API.Sql
 
         public static PopsicleInventoryDto RetrievePopsicleInventory(string? flavor, string? plu)
         {
+            // I don't like needing to call the validation method twice, but it does protect against cases where one of the 
+            // arguments isn't valid (and not empty!) and the other is valid
+            if (!PopsicleInventoryValidator.IsValidPopsicleInventoryRequest(flavor, plu, out string _))
+                return null;
+
             var popsicleFlavor = PopsicleInventoryValidator.GetPopsicleFlavorFromString(flavor);
             var candidates = RetrievePopsicleInventories(popsicleFlavor, plu);
             
@@ -35,7 +39,7 @@ namespace API.Sql
                 (flavor is null || pi.PopsicleFlavor.Equals(flavor))
                 && (string.IsNullOrEmpty(plu) || pi.Plu.ToLower().Equals(plu.ToLower()))
                 && pi.Quantity > 0
-                && pi.Enabled
+                && (enabled is null || pi.Enabled == enabled)
             ).ToList();
         }
 

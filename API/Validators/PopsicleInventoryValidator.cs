@@ -32,7 +32,17 @@ namespace API.Validators
             bool isValidFlavor = IsValidFlavor(flavor);
             bool isValidPlu = IsValidPlu(plu);
 
-            if (!isValidFlavor && !isValidPlu)
+            // I don't like the way this looks, and I don't think theres a much better way to format it. Cie La Vie
+            if (
+                (
+                    !isValidFlavor && !isValidPlu
+                ) 
+                    || 
+                (
+                    (!string.IsNullOrEmpty(flavor) && ! string.IsNullOrEmpty(plu))
+                    && (!isValidFlavor || !isValidPlu)
+                )
+            )
             {
                 if(!isValidFlavor)
                     errorDescription += string.Format(ErrorMessages[ErrorDescription.Invalid_Flavor], flavor ?? "None;");
