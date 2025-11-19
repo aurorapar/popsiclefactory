@@ -7,6 +7,8 @@
         Lime,
         Orange,
         Grape,
-        Raspberry
+        Raspberry,
+        Apple,
+        Mystery,
     }
 }

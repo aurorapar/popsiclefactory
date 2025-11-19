@@ -1,6 +1,8 @@
 ﻿using API.Dtos;
 using API.Enums;
 using API.Validators;
+using static API.Validators.PopsicleInventoryValidator;
+using static API.Common.CommonMethods;
 
 namespace API.Sql
 {
@@ -20,8 +22,11 @@ namespace API.Sql
         public static PopsicleInventoryDto RetrievePopsicleInventory(string? flavor, string? plu)
         {
             // I don't like needing to call the validation method twice, but it does protect against cases where one of the 
-            // arguments isn't valid (and not empty!) and the other is valid
+            // arguments isn't valid (and not empty!) and the other is valid (did someone reuse the API incorrectly?)
             if (!PopsicleInventoryValidator.IsValidPopsicleInventoryRequest(flavor, plu, out string _))
+                return null;
+
+            if (!PopsicleInventoryValidator.IsValidCriteriaMatch(flavor, plu, out string _))
                 return null;
 
             var popsicleFlavor = PopsicleInventoryValidator.GetPopsicleFlavorFromString(flavor);
@@ -53,37 +58,24 @@ namespace API.Sql
             if (!PopsicleInventoryValidator.IsValidPopsicleInventoryRequest(flavor, plu, out string _))
                 return null;
 
+            if (!PopsicleInventoryValidator.IsValidAuthor(author))
+                return null;
+
             var popsicleFlavor = PopsicleInventoryValidator.GetPopsicleFlavorFromString(flavor);
 
-            var testPopsicles = RetrievePopsicleInventories(popsicleFlavor, plu, enabled: null)
+            var testPopsicles = RetrievePopsicleInventories(null, null, enabled: null) // custom matching, so return em all
                 .Where(p => p.PopsicleFlavor.Equals(popsicleFlavor) || p.Plu.Equals(plu))
                 .ToList(); // always want a non-destructive type
 
             if (!testPopsicles.Any())
-            {
                 return CreateNewPopsicleInventory(testPopsicles.Count() + 1, (PopsicleFlavor)popsicleFlavor, plu, quantity, author);
-            }
             else
-            {
-                if (testPopsicles.Count > 1)
-                    // This would DEFINITELY be a case worth logging. The logic should straight up prevent multiples from being created,
-                    // even with the enabled flag
-                    return null;
-
-                PopsicleInventoryDto popsicle = testPopsicles.First();
-
-                if (!popsicle.PopsicleFlavor.Equals(popsicleFlavor) || !popsicle.Plu.Equals(plu))
-                    return null;
-
-                if (!popsicle.Enabled)
-                    EnablePopsicle(popsicle, author);
-
-                return popsicle;
-            }
+                return RetrievePopsicleInventory(flavor, plu);
         }
 
         public static void EnablePopsicle(PopsicleInventoryDto popsicle, string author)
         {
+            //TODO: Log updates to popsicles
             popsicle.Enabled = true;
             popsicle.Modifier = author;
             popsicle.DateModified = DateTime.UtcNow;
@@ -91,9 +83,45 @@ namespace API.Sql
 
         public static PopsicleInventoryDto CreateNewPopsicleInventory(int id, PopsicleFlavor popsicleFlavor, string plu, uint quantity, string author)
         {
+            //TODO: Log creation of popsicles
             var newPopsicle = new PopsicleInventoryDto(id, quantity, (PopsicleFlavor)popsicleFlavor, plu, DateTime.UtcNow, DateTime.UtcNow, author, author, true);
             PopsicleInventories.Add(newPopsicle);
             return newPopsicle;
+        }
+
+        public static PopsicleInventoryDto? UpdatePopsicleInventory(string? flavor, string? plu, string? newFlavor, string? newPlu, uint? quantity, string author, bool? enabled = null)
+        {
+            if (!IsValidPopsicleInventoryRequest(flavor, plu, out string _))
+                return null;
+
+            if (!IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, quantity, out string _))
+                return null;
+
+            if (!IsValidAuthor(author))
+                return null;
+
+            if (!IsValidCriteriaMatch(flavor, plu, out string _))
+                return null;
+
+            var originalPopsicle = RetrievePopsicleInventory(flavor, plu);
+            if (originalPopsicle is null)
+                return null;
+
+            var newPopsicle = Sql.CommonMethods.RetrievePopsicleInventory(newFlavor, newPlu);
+            if (newPopsicle is not null && newPopsicle != originalPopsicle)
+                return null;
+
+            // TODO: Log updates to popsicles
+            
+            originalPopsicle.PopsicleFlavor = GetPopsicleFlavorFromString(newFlavor) ?? originalPopsicle.PopsicleFlavor;
+            originalPopsicle.Plu = IsEmptyString(newPlu) ? originalPopsicle.Plu : newPlu;
+            originalPopsicle.Quantity = quantity ?? originalPopsicle.Quantity;
+            originalPopsicle.Enabled = enabled ?? originalPopsicle.Enabled;
+            originalPopsicle.DateModified = DateTime.UtcNow;
+            originalPopsicle.Modifier = author;
+
+            return originalPopsicle;
+
         }
 
     }

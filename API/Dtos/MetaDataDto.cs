@@ -19,7 +19,7 @@ namespace API.Dtos
         public MetaDataDto(DateTime dateCreated, DateTime? dateModified, string creator, string modifier, bool? enabled = null)
         {
             DateCreated = dateCreated;
-            DateModified = dateModified == null ? dateCreated : (DateTime)dateModified;
+            DateModified = dateModified is null ? dateCreated : (DateTime)dateModified;
             Creator = creator;
             Modifier = string.IsNullOrEmpty(modifier) ? creator : modifier;
             Enabled = enabled ?? true;

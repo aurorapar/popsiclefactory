@@ -2,11 +2,9 @@
 {
     public static class CommonMethods
     {
-        public static string RemoveWhitespace(this string input)
+        public static bool IsEmptyString(string? input)
         {
-            return new string(input
-                .Where(c => !Char.IsWhiteSpace(c))
-                .ToArray());
+            return string.IsNullOrEmpty(input) || string.IsNullOrWhiteSpace(input);
         }
     }
 }

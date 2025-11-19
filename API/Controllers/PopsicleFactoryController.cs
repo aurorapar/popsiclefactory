@@ -29,12 +29,15 @@ public class PopsicleFactoryController : ControllerBase
     }
 
     [HttpGet(Name = "GetPopsicleInventory")]
-    public IActionResult GetPopsicleInventory(string? flavor, string? plu)
+    public IActionResult GetPopsicleInventory(string? flavor, string? plu, bool? enabled = true)
     {
         string resultMessage;
         
-        if (!IsValidPopsicleInventoryRequest(flavor, plu, out resultMessage))
+        if (!IsValidPopsicleInventoryRequest(flavor, plu, out resultMessage, enabled))
             return BadRequest(resultMessage);
+
+        if (!IsValidCriteriaMatch(flavor, plu, out resultMessage, enabled))
+            return Conflict(resultMessage);
 
         var popsicleInventory = Sql.CommonMethods.RetrievePopsicleInventory(flavor, plu);
         if (popsicleInventory is null)
@@ -45,7 +48,7 @@ public class PopsicleFactoryController : ControllerBase
     }
 
     [HttpPut(Name = "AddPopsicleInventory")]
-    public IActionResult GetPopsicleInventory(string flavor, string plu, uint quantity, string author)
+    public IActionResult AddPopsicleInventory(string? flavor, string? plu, uint quantity, string author)
     {
         string resultMessage;
 
@@ -55,7 +58,34 @@ public class PopsicleFactoryController : ControllerBase
         if (!IsValidAuthor(author))
             return BadRequest(ErrorMessages[ErrorDescription.Invalid_Author]);
 
+        if (!IsValidCriteriaMatch(flavor, plu, out resultMessage))
+            return Conflict(resultMessage);
+
         var popsicleInventory = Sql.CommonMethods.CreatePopsicleInventory(flavor, plu, quantity, author);
+        if (popsicleInventory is null)
+            return Problem(ErrorMessages[ErrorDescription.Contact_Support]);
+
+        return Ok(new PopsicleInventory(popsicleInventory));
+    }
+
+    [HttpPut(Name = "ReplacePopsicleInventory")]
+    public IActionResult ReplacePopsicleInventory(string flavor, string plu, string? newFlavor, string? newPlu, uint? quantity, string author, bool? enabled = null)
+    {
+        string resultMessage;
+
+        if (!IsValidPopsicleInventoryRequest(flavor, plu, out resultMessage))
+            return BadRequest("Target Popsicle Invalid - " + resultMessage);
+
+        if (!IsValidPopsicleInventoryUpdateRequest(flavor, plu, newFlavor, newPlu, quantity, out resultMessage))
+            return BadRequest("Update Values Invalid - " + resultMessage);
+
+        if (!IsValidAuthor(author))
+            return BadRequest(ErrorMessages[ErrorDescription.Invalid_Author]);
+
+        if (!IsValidCriteriaMatch(flavor, plu, out resultMessage))
+            return Conflict(resultMessage);
+
+        var popsicleInventory = Sql.CommonMethods.UpdatePopsicleInventory(flavor, plu, newFlavor, newPlu,  quantity, author, enabled);
         if (popsicleInventory is null)
             return Problem(ErrorMessages[ErrorDescription.Contact_Support]);
 
