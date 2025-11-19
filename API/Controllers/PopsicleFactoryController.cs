@@ -38,7 +38,26 @@ public class PopsicleFactoryController : ControllerBase
 
         var popsicleInventory = Sql.CommonMethods.RetrievePopsicleInventory(flavor, plu);
         if (popsicleInventory is null)
-            return BadRequest(string.Format(ErrorMessages[ErrorDescription.Does_Not_Exist], flavor ?? "None", plu ?? "None"));
+            // request was properly formatted & submitted, no need for an error
+            return Ok(string.Format(ErrorMessages[ErrorDescription.Does_Not_Exist], flavor ?? "None", plu ?? "None"));
+
+        return Ok(new PopsicleInventory(popsicleInventory));
+    }
+
+    [HttpPut(Name = "AddPopsicleInventory")]
+    public IActionResult GetPopsicleInventory(string flavor, string plu, uint quantity, string author)
+    {
+        string resultMessage;
+
+        if (!IsValidPopsicleInventoryRequest(flavor, plu, out resultMessage))
+            return BadRequest(resultMessage);
+
+        if (!IsValidAuthor(author))
+            return BadRequest(ErrorMessages[ErrorDescription.Invalid_Author]);
+
+        var popsicleInventory = Sql.CommonMethods.CreatePopsicleInventory(flavor, plu, quantity, author);
+        if (popsicleInventory is null)
+            return Problem(ErrorMessages[ErrorDescription.Contact_Support]);
 
         return Ok(new PopsicleInventory(popsicleInventory));
     }

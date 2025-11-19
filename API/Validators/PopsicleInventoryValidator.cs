@@ -1,4 +1,5 @@
-﻿using API.Enums;
+﻿using API.Common;
+using API.Enums;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -15,6 +16,8 @@ namespace API.Validators
             Invalid_Flavor,// Would normally do a regex here for format validation
             Invalid_Plu,
             Does_Not_Exist,
+            Contact_Support,
+            Invalid_Author,
         }
 
         public static Dictionary<ErrorDescription, string> ErrorMessages = new()
@@ -22,6 +25,8 @@ namespace API.Validators
             { ErrorDescription.Invalid_Flavor, "Invalid Flavor {0}" },
             { ErrorDescription.Invalid_Plu, "Invalid PLU Format" },
             { ErrorDescription.Does_Not_Exist, "Popsicle Inventory Does Not Exist for Flavor {0} Plu {1}" },
+            { ErrorDescription.Contact_Support, "Please Contact Support" },
+            { ErrorDescription.Invalid_Author, "Please Supply An Author" },
         };
 
 
@@ -77,6 +82,11 @@ namespace API.Validators
                 return false;            
 
             return true;
+        }
+
+        public static bool IsValidAuthor(string author)
+        {
+            return !string.IsNullOrEmpty(CommonMethods.RemoveWhitespace(author));
         }
 
         public static PopsicleFlavor? GetPopsicleFlavorFromString(string? flavor)

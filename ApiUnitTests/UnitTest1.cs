@@ -12,7 +12,7 @@ namespace ApiUnitTests
         public void Test_IsValidPopsicleInventoryRequestTrue(string? flavor, string? plu)
         {
             bool isValidRequest = PopsicleInventoryValidator.IsValidPopsicleInventoryRequest(flavor, plu, out string error);
-            Assert.True(isValidRequest, "Valid Request");
+            Assert.True(isValidRequest, "Invalid Request");
         }
 
         [Theory]        
@@ -30,7 +30,7 @@ namespace ApiUnitTests
         public void Test_IsValidFlavorTrue(string? flavor)
         {
             bool isValidFlavor = PopsicleInventoryValidator.IsValidFlavor(flavor);
-            Assert.True(isValidFlavor, "Valid Flavor");
+            Assert.True(isValidFlavor, "Invalid Flavor");
         }
 
         [Theory]
@@ -48,7 +48,7 @@ namespace ApiUnitTests
         public void Test_IsValidPluTrue(string? plu)
         {
             bool isValidPlu = PopsicleInventoryValidator.IsValidPlu(plu);
-            Assert.True(isValidPlu, "Valid Plu");
+            Assert.True(isValidPlu, "Invalid Plu");
         }
 
         [Theory]
@@ -73,7 +73,7 @@ namespace ApiUnitTests
             var allPopsicles = API.Sql.CommonMethods.RetrieveAllPopsicleInventories();
 
             var popsicleInventory = API.Sql.CommonMethods.RetrievePopsicleInventory(flavor, plu);
-            Assert.True(popsicleInventory is PopsicleInventoryDto, "Valid Plu");
+            Assert.True(popsicleInventory is PopsicleInventoryDto, "Invalid Popsicle");
         }
 
         [Theory]
@@ -85,7 +85,27 @@ namespace ApiUnitTests
             var allPopsicles = API.Sql.CommonMethods.RetrieveAllPopsicleInventories();
 
             var popsicleInventory = API.Sql.CommonMethods.RetrievePopsicleInventory(flavor, plu);
-            Assert.True(popsicleInventory is null, "Valid Plu");
+            Assert.True(popsicleInventory is null, "Valid Popsicle");
+        }
+
+        [Theory]
+        [InlineData("lemon", "123123", 241, "aurora")]
+        [InlineData("orange", "123456", 241, "aurora")]
+        public void Test_CreatePopsicleInventoryTrue(string flavor, string plu, uint quantity, string author)
+        {
+            var popsicleInventory = API.Sql.CommonMethods.CreatePopsicleInventory(flavor, plu, quantity, author);
+            Assert.True(popsicleInventory is PopsicleInventoryDto, "Invalid Popsicle Creation");
+        }
+
+        [Theory]
+        [InlineData("lemon", "123123", 241, "")]
+        [InlineData("lemon", "123123", 241, null)]
+        [InlineData("orange", "123123", 46546, "aurora")]
+        [InlineData("orange", "123123", 46546, "")]
+        public void Test_CreatePopsicleInventoryFalse(string flavor, string plu, uint quantity, string author)
+        {
+            var popsicleInventory = API.Sql.CommonMethods.CreatePopsicleInventory(flavor, plu, quantity, author);
+            Assert.True(popsicleInventory is null, "Valid Popsicle Creation");
         }
 
 
